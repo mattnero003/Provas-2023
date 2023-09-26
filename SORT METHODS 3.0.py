@@ -1,0 +1,269 @@
+import random
+import time
+import tkinter as tk
+from tkinter import ttk, messagebox
+
+# Algoritmos de ordenação
+
+# ... (Os algoritmos permanecem os mesmos que antes) ...
+
+class SortingApp:
+
+    def __init__(self, master):
+        self.master = master
+        self.master.title("Algoritmos de ordenação")
+
+        # Dropdown para seleção do algoritmo
+        self.algo_var = tk.StringVar()
+        self.algo_options = ["Bubble Sort", "Insertion Sort", "Selection Sort", "Merge Sort", "Quicksort", "Comparativo de tempo de execução"]
+        self.algo_dropdown = ttk.Combobox(master, textvariable=self.algo_var, values=self.algo_options, state="readonly")
+        self.algo_dropdown.pack(pady=20)
+        self.algo_dropdown.bind("<<ComboboxSelected>>", self.on_algo_selected)
+
+        # Label e Entry para quantidade de números
+        self.label_num = ttk.Label(master, text="Quantos números?")
+        self.label_num.pack(pady=10)
+        self.entry_num = ttk.Entry(master)
+        self.entry_num.pack(pady=10)
+
+        # Botões para opção de entrada
+        self.radio_var = tk.StringVar(value="manual")
+        self.radio_manual = ttk.Radiobutton(master, text="Digite os números", variable=self.radio_var, value="manual")
+        self.radio_random = ttk.Radiobutton(master, text="Números aleatórios", variable=self.radio_var, value="random")
+        self.radio_manual.pack(anchor=tk.W, padx=20)
+        self.radio_random.pack(anchor=tk.W, padx=20)
+
+        # Botão de ordenação
+        self.btn_sort = ttk.Button(master, text="Ordenar", command=self.sort_numbers)
+        self.btn_sort.pack(pady=20)
+
+        # Text widget para mostrar resultados
+        self.result_text = tk.Text(master, wrap=tk.WORD, width=60, height=15)
+        self.result_text.pack(pady=20)
+
+    def on_algo_selected(self, event):
+        if self.algo_var.get() == "Comparativo de tempo de execução":
+            self.entry_num.delete(0, tk.END)
+            self.entry_num.insert(0, "10000")
+            self.entry_num.config(state=tk.DISABLED)
+        else:
+            self.entry_num.config(state=tk.NORMAL)
+
+    def sort_numbers(self):
+        algo = self.algo_var.get()
+        if not algo:
+            messagebox.showerror("Erro", "Selecione um algoritmo!")
+            return
+
+        try:
+            n = int(self.entry_num.get())
+        except ValueError:
+            messagebox.showerror("Erro", "Digite um número válido!")
+            return
+
+        if self.radio_var.get() == "manual":
+            numbers = []
+            new_window = tk.Toplevel(self.master)
+            new_window.title("Digite os números")
+
+            for i in range(n):
+                ttk.Label(new_window, text=f"Digite o número {i+1}:").grid(row=i, column=0)
+                entry = ttk.Entry(new_window)
+                entry.grid(row=i, column=1)
+                numbers.append(entry)
+
+            def on_submit():
+                try:
+                    numbers_list = [int(entry.get()) for entry in numbers]
+                    new_window.destroy()
+                    self.perform_sorting(algo, numbers_list)
+                except ValueError:
+                    messagebox.showerror("Erro", "Digite números válidos!")
+
+            ttk.Button(new_window, text="Submit", command=on_submit).grid(row=n, columnspan=2, pady=10)
+
+        else:
+            numbers_list = [random.randint(1, 10**5) for _ in range(n)]
+            self.perform_sorting(algo, numbers_list)
+
+    def perform_sorting(self, algo, numbers_list):
+        # Map algorithms
+        algo_map = {
+            "Bubble Sort": bubble_sort,
+            "Insertion Sort": insertion_sort,
+            "Selection Sort": selection_sort,
+            "Merge Sort": merge_sort,
+            "Quicksort": quicksort
+        }
+
+        self.result_text.delete(1.0, tk.END)
+        start_time = time.time()
+        
+        if algo == "Comparativo de tempo de execução":
+            sizes = [10000, 30000]
+            algorithms = [("Bubble Sort", bubble_sort), ("Insertion Sort", insertion_sort), 
+                          ("Selection Sort", selection_sort), ("Merge Sort", merge_sort), 
+                          ("Quick Sort", quicksort)]
+            for size in sizes:
+                self.result_text.insert(tk.END, f"\nComparativo para vetor de tamanho {size}:\n")
+                times = [(name, time_algorithm(func, numbers_list)) for name, func in algorithms]
+                times.sort(key=lambda x: x[1])
+                for i, (name, t) in enumerate(times):
+                    self.result_text.insert(tk.END, f"{i+1}-{name}: {t:.2f} segundos\n")
+        else:
+            sorted_list = algo_map[algo](numbers_list.copy())
+            elapsed_time = time.time() - start_time
+            self.result_text.insert(tk.END, f"Algoritmo: {algo}\n")
+            self.result_text.insert(tk.END, "-"*50 + "\n")
+            self.result_text.insert(tk.END, f"Vetor ANTES da ordenação:\n{numbers_list}\n\n")
+            self.result_text.insert(tk.END, f"Vetor APÓS da ordenação:\n{sorted_list}\n")
+            self.result_text.insert(tk.END, f"\nTempo de execução: {elapsed_time:.5f} segundos\n")
+            self.result_text.insert(tk.END, "-"*50 + "\n")
+
+if __name__ == "__main__":
+    root = tk.Tk()
+    app = SortingApp(root)
+    root.mainloop()
+
+
+def bubble_sort(arr):
+    n = len(arr)
+    for i in range(n):
+        swapped = False
+        for j in range(0, n-i-1):
+            if arr[j] > arr[j+1]:
+                arr[j], arr[j+1] = arr[j+1], arr[j]
+                swapped = True
+        if not swapped:
+            break
+    return arr
+
+def insertion_sort(arr):
+    for i in range(1, len(arr)):
+        key = arr[i]
+        j = i-1
+        while j >= 0 and key < arr[j]:
+            arr[j+1] = arr[j]
+            j -= 1
+        arr[j+1] = key
+    return arr
+
+def selection_sort(arr):
+    for i in range(len(arr)):
+        min_idx = i
+        for j in range(i+1, len(arr)):
+            if arr[j] < arr[min_idx]:
+                min_idx = j
+        arr[i], arr[min_idx] = arr[min_idx], arr[i]
+    return arr
+
+def merge_sort(arr):
+    if len(arr) <= 1:
+        return arr
+    mid = len(arr) // 2
+    left = merge_sort(arr[:mid])
+    right = merge_sort(arr[mid:])
+    return merge(left, right)
+
+def merge(left, right):
+    result = []
+    i = j = 0
+    while i < len(left) and j < len(right):
+        if left[i] < right[j]:
+            result.append(left[i])
+            i += 1
+        else:
+            result.append(right[j])
+            j += 1
+    result.extend(left[i:])
+    result.extend(right[j:])
+    return result
+
+def quicksort(arr):
+    if len(arr) <= 1:
+        return arr
+    pivot = arr[len(arr) // 2]
+    left = [x for x in arr if x < pivot]
+    middle = [x for x in arr if x == pivot]
+    right = [x for x in arr if x > pivot]
+    return quicksort(left) + middle + quicksort(right)
+
+
+def generate_numbers(n, user_input=True):
+    if user_input:
+        return [int(input(f"Digite o número {i+1}: ")) for i in range(n)]
+    else:
+        return [random.randint(1, 10**5) for i in range(n)]
+
+def time_algorithm(algorithm, arr):
+    start_time = time.time()
+    algorithm(arr.copy())
+    return time.time() - start_time
+
+def display_sorted_result(name, original, sorted_arr, elapsed_time):
+    """Exibe o resultado de uma operação de ordenação em um formato mais claro."""
+    print("\n" + "-"*50)
+    print(f"Algoritmo: {name}")
+    print("-"*50)
+    print("Vetor ANTES da ordenação:")
+    print(original)
+    print("\nVetor APÓS da ordenação:")
+    print(sorted_arr)
+    print(f"\nTempo de execução: {elapsed_time:.5f} segundos")
+    print("-"*50 + "\n")
+
+def main():
+    while True:
+        print("""
+        1- Bubble Sort
+        2- Insertion Sort
+        3- Selection Sort
+        4- Merge Sort
+        5- Quicksort
+        6- Comparativo de tempo de execução
+        7- Sair
+        """)
+
+        choice = int(input("Escolha uma opção: "))
+
+        if choice == 7:
+            break
+        elif choice in [1, 2, 3, 4, 5]:
+            n = int(input("Quantos números serão ordenados? "))
+            user_input = input("Você vai inserir os números (s/n)? ").lower() == 's'
+            arr = generate_numbers(n, user_input)
+            
+            start_time = time.time()
+            
+            if choice == 1:
+                sorted_arr = bubble_sort(arr.copy())
+                display_sorted_result("Bubble Sort", arr, sorted_arr, time.time() - start_time)
+            elif choice == 2:
+                sorted_arr = insertion_sort(arr.copy())
+                display_sorted_result("Insertion Sort", arr, sorted_arr, time.time() - start_time)
+            elif choice == 3:
+                sorted_arr = selection_sort(arr.copy())
+                display_sorted_result("Selection Sort", arr, sorted_arr, time.time() - start_time)
+            elif choice == 4:
+                sorted_arr = merge_sort(arr.copy())
+                display_sorted_result("Merge Sort", arr, sorted_arr, time.time() - start_time)
+            elif choice == 5:
+                sorted_arr = quicksort(arr.copy())
+                display_sorted_result("Quicksort", arr, sorted_arr, time.time() - start_time)
+        elif choice == 6:
+            sizes = [10000, 30000]
+            algorithms = [("Bubble Sort", bubble_sort), ("Insertion Sort", insertion_sort), 
+                          ("Selection Sort", selection_sort), ("Merge Sort", merge_sort), 
+                          ("Quick Sort", quicksort)]
+            
+            for size in sizes:
+                print(f"\nComparativo para vetor de tamanho {size}:")
+                arr = generate_numbers(size, False)
+                times = [(name, time_algorithm(func, arr)) for name, func in algorithms]
+                times.sort(key=lambda x: x[1])
+
+                for i, (name, t) in enumerate(times):
+                    print(f"{i+1}-{name}: {t:.2f} segundos")
+
+if __name__ == "__main__":
+    main()
