@@ -138,13 +138,12 @@ from tkinter import ttk, messagebox
 
 # Algoritmos de ordenação
 
-# ... (Os algoritmos permanecem os mesmos que antes) ...
 
 class SortingApp:
 
     def __init__(self, master):
         self.master = master
-        self.master.title("Sorting Algorithms")
+        self.master.title("Algoritmos de ordenação")
 
         # Dropdown para seleção do algoritmo
         self.algo_var = tk.StringVar()
