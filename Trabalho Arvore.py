@@ -67,13 +67,12 @@ class BinaryTree:
         node_parent = node.parent
         node_children = num_children(node)
 
-        # Case 1: node has no children
         if node_children == 0:
             if node_parent.left == node:
                 node_parent.left = None
             else:
                 node_parent.right = None
-        # Case 2: node has one child
+
         elif node_children == 1:
             if node.left is not None:
                 child = node.left
@@ -86,7 +85,7 @@ class BinaryTree:
                 node_parent.right = child
 
             child.parent = node_parent
-        # Case 3: node has two children
+    
         else:
             successor = min_value_node(node.right)
             node.key = successor.key
